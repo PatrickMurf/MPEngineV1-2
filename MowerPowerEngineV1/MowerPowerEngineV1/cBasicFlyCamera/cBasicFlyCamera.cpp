@@ -99,7 +99,7 @@ void cBasicFlyCamera::rotateLeftRight_Yaw(float yAngleAdjust)
 // negative (-ve) is "looking down"
 void cBasicFlyCamera::pitchUpDown(float xAngleAdjust)
 {
-	this->m_Pitch_X_axis_rotation += (this->m_turnSpeedScaling * xAngleAdjust);
+	this->m_Pitch_X_axis_rotation -= (this->m_turnSpeedScaling * xAngleAdjust);
 
 	// Clamp the pitch to +89 or -89 degrees
 	// When we use the lookAt() transform, if the target == up, then
