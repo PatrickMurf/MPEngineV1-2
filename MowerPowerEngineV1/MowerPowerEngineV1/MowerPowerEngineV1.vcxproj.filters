@@ -28,6 +28,9 @@
     <Filter Include="Global Things">
       <UniqueIdentifier>{c9c63a2d-713f-4f4a-8575-6b8bfe672521}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Physics Stuff">
+      <UniqueIdentifier>{4f7bcd9d-0e0d-48f5-a5ee-f6598ea09277}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -57,6 +60,9 @@
     <ClCompile Include="mouse_keyboard_async.cpp">
       <Filter>Mouse, Keyboard, FlyCamera</Filter>
     </ClCompile>
+    <ClCompile Include="cPhysics.cpp">
+      <Filter>Physics Stuff</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PlyFileLoaders.h">
@@ -79,6 +85,9 @@
     </ClInclude>
     <ClInclude Include="sharedThings.h">
       <Filter>Global Things</Filter>
+    </ClInclude>
+    <ClInclude Include="cPhysics.h">
+      <Filter>Physics Stuff</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

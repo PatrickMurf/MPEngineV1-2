@@ -1,2 +1,6 @@
 ﻿  cBasicFlyCamera.cpp
+  cPhysics.cpp
+  cVAOManager.cpp
+  Main.cpp
+  Generating Code...
   MowerPowerEngineV1.vcxproj -> C:\MowerPower_Engine\MPEngineV1-2\MowerPowerEngineV1\x64\Debug\MowerPowerEngineV1.exe
