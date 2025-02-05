@@ -63,6 +63,9 @@
     <ClCompile Include="cPhysics.cpp">
       <Filter>Physics Stuff</Filter>
     </ClCompile>
+    <ClCompile Include="cLightManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PlyFileLoaders.h">
@@ -88,6 +91,9 @@
     </ClInclude>
     <ClInclude Include="cPhysics.h">
       <Filter>Physics Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="cLightManager.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

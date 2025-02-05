@@ -39,6 +39,8 @@
 
 #include "cPhysics.h"
 
+#include "cLightManager.h"
+
 //
 //const unsigned int MAX_NUMBER_OF_MESHES = 1000;
 //unsigned int g_NumberOfMeshesToDraw;
@@ -49,6 +51,8 @@ std::vector<sMesh*> g_vecMeshesToDraw;
 cPhysics* g_pPhysicEngine = NULL;
 // This loads the 3D models for drawing, etc.
 cVAOManager* g_pMeshManager = NULL;
+
+cLightManager* g_pLightManager = NULL;
 
 void AddModelsToScene(void);
 
@@ -272,10 +276,11 @@ int main(void)
     // Like it captures the press and release and repeat
     glfwSetKeyCallback(window, key_callback);
 
-    glfwSetCursorPosCallback(window, cursor_position_callback);     // Gets the mouse position
-    glfwSetWindowFocusCallback(window, cursor_enter_callback);      // Prevents it from tracking the mouse off the window
-    glfwSetMouseButtonCallback(window, mouse_button_callback);      // When you press a button
-    glfwSetScrollCallback(window, scroll_callback);                 // For the scrollwheel
+    // 
+    glfwSetCursorPosCallback(window, cursor_position_callback);
+    glfwSetWindowFocusCallback(window, cursor_enter_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
 
 
@@ -394,13 +399,21 @@ int main(void)
     //    terrainModel, program);
     //std::cout << terrainModel.numberOfVertices << " vertices loaded" << std::endl;
 
+    sModelDrawInfo bunnyModel;
+    //    ::g_pMeshManager->LoadModelIntoVAO("assets/models/bun_zipper_res2_10x_size_xyz_only.ply",
+    ::g_pMeshManager->LoadModelIntoVAO("assets/models/bun_zipper_res2_10x_size_xyz_N_only.ply",
+        bunnyModel, program);
+    std::cout << bunnyModel.numberOfVertices << " vertices loaded" << std::endl;
+
     sModelDrawInfo platPlaneDrawInfo;
-    ::g_pMeshManager->LoadModelIntoVAO("assets/models/Flat_Plane_xyz.ply",
+    //    ::g_pMeshManager->LoadModelIntoVAO("assets/models/Flat_Plane_xyz.ply", 
+    ::g_pMeshManager->LoadModelIntoVAO("assets/models/Flat_Plane_xyz_N.ply",
         platPlaneDrawInfo, program);
     std::cout << platPlaneDrawInfo.numberOfVertices << " vertices loaded" << std::endl;
 
     sModelDrawInfo sphereMesh;
-    ::g_pMeshManager->LoadModelIntoVAO("assets/models/Sphere_radius_1_xyz.ply",
+    //    ::g_pMeshManager->LoadModelIntoVAO("assets/models/Sphere_radius_1_xyz.ply",
+    ::g_pMeshManager->LoadModelIntoVAO("assets/models/Sphere_radius_1_xyz_N.ply",
         sphereMesh, program);
     std::cout << sphereMesh.numberOfVertices << " vertices loaded" << std::endl;
 
@@ -425,6 +438,21 @@ int main(void)
 
     double currentFrameTime = glfwGetTime();
     double lastFrameTime = glfwGetTime();
+
+
+    // Set up the lights
+    ::g_pLightManager = new cLightManager();
+    // Called only once
+    ::g_pLightManager->loadUniformLocations(program);
+
+    // Set up one of the lights in the scene
+    ::g_pLightManager->theLights[0].position = glm::vec4(0.0f, 15.0f, 0.0f, 1.0f);
+    ::g_pLightManager->theLights[0].diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    ::g_pLightManager->theLights[0].atten.y = 0.1f;
+    ::g_pLightManager->theLights[0].atten.z = 0.01f;
+
+    ::g_pLightManager->theLights[0].param1.x = 0.0f;    // Point light (see shader)
+    ::g_pLightManager->theLights[0].param2.x = 1.0f;    // Turn on (see shader)
 
 
     while (!glfwWindowShouldClose(window))
@@ -459,8 +487,26 @@ int main(void)
         //                               upVector);
 
 
-                // Draw all the objects
-                //for (unsigned int meshIndex = 0; meshIndex != ::g_NumberOfMeshesToDraw; meshIndex++)
+        const GLint matView_UL = glGetUniformLocation(program, "matView");
+        glUniformMatrix4fv(matView_UL, 1, GL_FALSE, (const GLfloat*)&matView);
+
+        const GLint matProjection_UL = glGetUniformLocation(program, "matProjection");
+        glUniformMatrix4fv(matProjection_UL, 1, GL_FALSE, (const GLfloat*)&matProjection);
+
+
+        // Place light #0 where the little yellow "light sphere" is
+        // Find the Light_Sphere
+        sMesh* pLightSphere = pFindMeshByFriendlyName("Light_Sphere");
+        // 
+        ::g_pLightManager->theLights[0].position = glm::vec4(pLightSphere->positionXYZ, 1.0f);
+
+        // Update the light info in the shader
+        // (Called every frame)
+        ::g_pLightManager->updateShaderWithLightInfo();
+
+
+        // Draw all the objects
+        //for (unsigned int meshIndex = 0; meshIndex != ::g_NumberOfMeshesToDraw; meshIndex++)
         for (unsigned int meshIndex = 0; meshIndex != ::g_vecMeshesToDraw.size(); meshIndex++)
         {
             //            sMesh* pCurMesh = ::g_myMeshes[meshIndex];
@@ -520,13 +566,24 @@ int main(void)
 
             //mat4x4_mul(mvp, p, m);
             //mvp = p * v * m;
-            glm::mat4 matMVP = matProjection * matView * matModel;
+            //glm::mat4 matMVP = matProjection * matView * matModel;
 
-            const GLint mvp_location = glGetUniformLocation(program, "MVP");
-            glUniformMatrix4fv(mvp_location,
-                1,
-                GL_FALSE,
-                (const GLfloat*)&matMVP);
+
+
+            //const GLint mvp_location = glGetUniformLocation(program, "MVP");
+            const GLint mvp_location = glGetUniformLocation(program, "matModel");
+            glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*)&matModel);
+
+            // Moving these, because they don't change often / at all?
+            /*
+            const GLint mvp_location = glGetUniformLocation(program, "matView");
+            glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*)&matMVP);
+
+            const GLint mvp_location = glGetUniformLocation(program, "matProjection");
+            glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*)&matMVP);
+            */
+
+
 
             // uniform bool bUseObjectColour;
             GLint bUseObjectColour = glGetUniformLocation(program, "bUseObjectColour");
@@ -640,8 +697,44 @@ void AddModelsToScene(void)
     // Load some models to draw
 
     {
+        sMesh* pSphereMesh = new sMesh();
+        //        pSphereMesh->modelFileName = "assets/models/Sphere_radius_1_xyz.ply";
+        pSphereMesh->modelFileName = "assets/models/Sphere_radius_1_xyz_N.ply";
+        pSphereMesh->positionXYZ = glm::vec3(0.0f, 7.5f, 0.0f);
+        pSphereMesh->bIsWireframe = true;
+        pSphereMesh->objectColourRGBA = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+        pSphereMesh->uniformScale = 0.1f;
+        pSphereMesh->uniqueFriendlyName = "Light_Sphere";
+
+        ::g_vecMeshesToDraw.push_back(pSphereMesh);
+    }
+
+    // Add a bunch of bunny rabbits
+    float boxLimit = 50.0f;
+    float boxStep = 5.0f;
+    for (float x = -boxLimit; x <= boxLimit; x += boxStep)
+    {
+        for (float z = -boxLimit; z <= boxLimit; z += boxStep)
+        {
+            sMesh* pBunny = new sMesh();
+            //            pBunny->modelFileName = "assets/models/bun_zipper_res2_10x_size_xyz_only.ply";
+            pBunny->modelFileName = "assets/models/bun_zipper_res2_10x_size_xyz_N_only.ply";
+            pBunny->positionXYZ = glm::vec3(x, -3.0f, z);
+            pBunny->objectColourRGBA
+                = glm::vec4(getRandomFloat(0.0f, 1.0f),
+                    getRandomFloat(0.0f, 1.0f),
+                    getRandomFloat(0.0f, 1.0f),
+                    1.0f);
+            pBunny->uniqueFriendlyName = "Ground";
+            ::g_vecMeshesToDraw.push_back(pBunny);
+        }
+    }//for (float x = -boxLimit...
+
+
+    {
         sMesh* pFlatPlane = new sMesh();
-        pFlatPlane->modelFileName = "assets/models/Flat_Plane_xyz.ply";
+        //        pFlatPlane->modelFileName = "assets/models/Flat_Plane_xyz.ply";
+        pFlatPlane->modelFileName = "assets/models/Flat_Plane_xyz_N.ply";
         pFlatPlane->positionXYZ = glm::vec3(0.0f, -5.0f, 0.0f);
         pFlatPlane->objectColourRGBA = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
         pFlatPlane->uniqueFriendlyName = "Ground";
@@ -664,7 +757,8 @@ void AddModelsToScene(void)
     }
     {
         sMesh* pFlatPlane = new sMesh();
-        pFlatPlane->modelFileName = "assets/models/Flat_Plane_xyz.ply";
+        //        pFlatPlane->modelFileName = "assets/models/Flat_Plane_xyz.ply";
+        pFlatPlane->modelFileName = "assets/models/Flat_Plane_xyz_N.ply";
         pFlatPlane->positionXYZ = glm::vec3(0.0f, -5.0f, 0.0f);
         pFlatPlane->bIsWireframe = true;
         pFlatPlane->uniformScale = 1.01f;
@@ -672,15 +766,16 @@ void AddModelsToScene(void)
 
         //::g_myMeshes[::g_NumberOfMeshesToDraw] = pFlatPlane;
         //::g_NumberOfMeshesToDraw++;
-        ::g_vecMeshesToDraw.push_back(pFlatPlane);
+        //::g_vecMeshesToDraw.push_back(pFlatPlane);
     }
 
 
     {
         sMesh* pSphereMesh = new sMesh();
-        pSphereMesh->modelFileName = "assets/models/Sphere_radius_1_xyz.ply";
+        //        pSphereMesh->modelFileName = "assets/models/Sphere_radius_1_xyz.ply";
+        pSphereMesh->modelFileName = "assets/models/Sphere_radius_1_xyz_N.ply";
         pSphereMesh->positionXYZ = glm::vec3(0.0f, 10.0f, 0.0f);
-        pSphereMesh->bIsWireframe = true;
+        //pSphereMesh->bIsWireframe = true;
         pSphereMesh->objectColourRGBA = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
         pSphereMesh->uniqueFriendlyName = "Ball";
 
@@ -695,9 +790,9 @@ void AddModelsToScene(void)
         // We could also have pulled that information from the mesh info
         pSphereInfo->radius = 1.0f;
 
-        pSphereInfo->physicInfo.velocity.y = -0.5f;
+        //        pSphereInfo->physicInfo.velocity.y = -0.5f;
 
-        // Associate this drawing mesh to this physics object
+                // Associate this drawing mesh to this physics object
         pSphereInfo->physicInfo.pAssociatedDrawingMeshInstance = pSphereMesh;
 
         ::g_pPhysicEngine->vecSpheres.push_back(pSphereInfo);

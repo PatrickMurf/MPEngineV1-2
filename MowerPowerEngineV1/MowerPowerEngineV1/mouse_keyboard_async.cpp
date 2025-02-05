@@ -6,7 +6,10 @@
 #include <iostream>
 
 #include "sharedThings.h"   // The camera, etc.
+#include "sMesh.h"
 
+// Defined in theMain.cpp
+sMesh* pFindMeshByFriendlyName(std::string theNameToFind);
 
 struct sMouseState
 {
@@ -75,8 +78,8 @@ void handleMouseAsync(GLFWwindow* window)
 //        glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
 
-//    double xpos, ypos;
-//    glfwGetCursorPos(window, &xpos, &ypos);
+    double xpos, ypos;
+    glfwGetCursorPos(window, &xpos, &ypos);
 
 //    std::cout << "Async mouse location (x,y): " << xpos << ", " << ypos << std::endl;
 
@@ -91,6 +94,44 @@ void handleKeyboardAsync(GLFWwindow* window)
     if ( isShiftDown(window) )
     {
         // Keys move the target
+    }
+
+    if (isControlDown(window) )
+    {
+        // Find the Light_Sphere
+        sMesh* pLightSphere = pFindMeshByFriendlyName("Light_Sphere");
+
+        const float LIGHT_MOVE_SPEED = 0.01f;
+
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        {
+            pLightSphere->positionXYZ.z += LIGHT_MOVE_SPEED;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        {
+            pLightSphere->positionXYZ.z -= LIGHT_MOVE_SPEED;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        {
+            pLightSphere->positionXYZ.x -= LIGHT_MOVE_SPEED;
+        }
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        {
+            pLightSphere->positionXYZ.x += LIGHT_MOVE_SPEED;
+        }
+        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        {
+            pLightSphere->positionXYZ.y += LIGHT_MOVE_SPEED;
+        }
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        {
+            pLightSphere->positionXYZ.y -= LIGHT_MOVE_SPEED;
+        }
+
+        // HACK:Exit early
+        return;
     }
 
     if (areAllModifiersUp(window))
@@ -250,7 +291,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     // For most mice, the value is the DIFFERENCE between the last time this was called!
     // (i.e. it's not an absolute value)
     // It also goes up and down along the Y axis and is an integer
-    std::cout << "xoffset, yoffset: " << xoffset << ", " << yoffset << std::endl;
+//    std::cout << "xoffset, yoffset: " << xoffset << ", " << yoffset << std::endl;
 
     const float MOUSE_WHEEL_RATIO = 0.1f;
 
